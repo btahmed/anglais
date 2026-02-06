@@ -7,12 +7,8 @@ triggering:
 workflows:
   android-build:
     name: Build StudentFlow APK
-    instance_type: linux_x2
+    # PAS de instance_type = automatique gratuit
     
-    environment:
-      groups:
-        - keystore_credentials
-        
     scripts:
       - name: Install Bubblewrap
         script: |
