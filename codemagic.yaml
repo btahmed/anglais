@@ -9,24 +9,64 @@ workflows:
     name: Build StudentFlow APK
     
     scripts:
-      - name: Install JDK 17
+      - name: Install Android Tools
         script: |
           sudo apt update
-          sudo apt install -y openjdk-17-jdk
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          sudo apt install -y openjdk-17-jdk wget unzip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-9477386_latest.zip
+          export ANDROID_HOME=$PWD/cmdline-tools
+          export PATH=$PATH:$ANDROID_HOME/bin
           
-      - name: Install Bubblewrap
+      - name: Create TWA Project Manually
         script: |
-          npm install -g @bubblewrap/cli
+          mkdir -p StudentFlowTWA
+          cd StudentFlowTWA
           
-      - name: Build APK (non-interactive)
+          # Crée le projet Android de base
+          echo 'plugins {
+              id("com.android.application")
+          }
+          
+          android {
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.studentflow.app"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+              }
+          }
+          
+          dependencies {
+              implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.4.0"
+          }' > build.gradle
+          
+          # Crée le manifest
+          mkdir -p src/main
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application android:label="StudentFlow">
+                  <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                          android:value="https://ton-url.netlify.app/" />
+                  </activity>
+              </application>
+          </manifest>' > src/main/AndroidManifest.xml
+          
+      - name: Build APK
         script: |
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          bubblewrap init \
-            --manifest https://ton-url.netlify.app/manifest.json \
-            --jdkPath /usr/lib/jvm/java-17-openjdk-amd64 \
-            --nointeractive
-          bubblewrap build
+          cd StudentFlowTWA
+          export ANDROID_HOME=$PWD/../cmdline-tools
+          export PATH=$PATH:$ANDROID_HOME/bin
+          ./gradlew assembleRelease
           
     artifacts:
-      - app/build/outputs/apk/release/*.apk
+      - StudentFlowTWA/app/build/outputs/apk/release/*.apk
