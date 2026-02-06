@@ -1,72 +1,48 @@
-name: StudentFlow PWA Build
-triggering:
-  push:
-    branches:
-      - main
-
 workflows:
   android-build:
     name: Build StudentFlow APK
-    
+    instance_type: linux_x2
+
+    environment:
+      vars:
+        ANDROID_SDK_ROOT: /home/builder/android-sdk
+        ANDROID_HOME: /home/builder/android-sdk
+
     scripts:
-      - name: Install Android Tools
+      - name: Install Java + tools
         script: |
-          sudo apt update
-          sudo apt install -y openjdk-17-jdk wget unzip
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-9477386_latest.zip
-          export ANDROID_HOME=$PWD/cmdline-tools
-          export PATH=$PATH:$ANDROID_HOME/bin
-          
-      - name: Create TWA Project Manually
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk wget unzip
+          java -version
+
+      - name: Install Android SDK cmdline-tools
         script: |
-          mkdir -p StudentFlowTWA
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          rm cmdline-tools.zip
+
+          # IMPORTANT: le SDK veut un dossier "latest"
+          mkdir -p latest
+          mv cmdline-tools/* latest/
+
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+
+          yes | sdkmanager --licenses
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+      - name: Build Release APK
+        script: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
           cd StudentFlowTWA
-          
-          # Crée le projet Android de base
-          echo 'plugins {
-              id("com.android.application")
-          }
-          
-          android {
-              compileSdk 34
-              defaultConfig {
-                  applicationId "com.studentflow.app"
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
-          }
-          
-          dependencies {
-              implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.4.0"
-          }' > build.gradle
-          
-          # Crée le manifest
-          mkdir -p src/main
-          echo '<?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application android:label="StudentFlow">
-                  <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-                      android:theme="@android:style/Theme.Translucent.NoTitleBar">
-                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                          android:value="https://ton-url.netlify.app/" />
-                  </activity>
-              </application>
-          </manifest>' > src/main/AndroidManifest.xml
-          
-      - name: Build APK
-        script: |
-          cd StudentFlowTWA
-          export ANDROID_HOME=$PWD/../cmdline-tools
-          export PATH=$PATH:$ANDROID_HOME/bin
-          ./gradlew assembleRelease
-          
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease
+
     artifacts:
       - StudentFlowTWA/app/build/outputs/apk/release/*.apk
