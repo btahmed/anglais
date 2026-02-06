@@ -1,67 +1,13 @@
 workflows:
   android-build:
-    name: Build StudentFlow APK
-
-    environment:
-      vars:
-        ANDROID_SDK_ROOT: $CM_BUILD_DIR/android-sdk
-        ANDROID_HOME: $CM_BUILD_DIR/android-sdk
+    name: Build StudentFlow Android (Capacitor)
 
     scripts:
-      - name: Install Java + tools
+      - name: Build APK
         script: |
-          set -e
-          if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y openjdk-17-jdk wget unzip
-          else
-            brew update
-            brew install openjdk@17 wget unzip
-            export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
-            export PATH="$JAVA_HOME/bin:$PATH"
-          fi
-          java -version
-
-      - name: Install Android SDK cmdline-tools (local)
-        script: |
-          set -e
-          echo "Build dir: $CM_BUILD_DIR"
-          echo "PWD: $PWD"
-
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          cd "$ANDROID_SDK_ROOT/cmdline-tools"
-
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip || true
-          if [ ! -s cmdline-tools.zip ]; then
-            # fallback mac runner: parfois wget linux zip échoue, on retente avec curl
-            curl -L -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          fi
-
-          unzip -q cmdline-tools.zip
-          rm cmdline-tools.zip
-
-          mkdir -p latest
-          mv cmdline-tools/* latest/
-
-          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-
-          which sdkmanager || (echo "sdkmanager introuvable"; ls -R "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"; exit 1)
-
-          yes | sdkmanager --licenses
-
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0"
-
-      - name: Build Release APK
-        script: |
-          set -e
-          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-
-          cd "$CM_BUILD_DIR/StudentFlowTWA"
+          cd android
           chmod +x gradlew
-          ./gradlew :app:assembleRelease
+          ./gradlew assembleRelease
 
     artifacts:
-      - StudentFlowTWA/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/apk/release/*.apk
