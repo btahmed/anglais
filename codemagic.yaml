@@ -2,7 +2,18 @@ workflows:
   android-build:
     name: Build StudentFlow Android (Capacitor)
 
+    environment:
+      node: latest
+
     scripts:
+      - name: Install Node deps
+        script: |
+          npm ci
+
+      - name: Sync Capacitor Android
+        script: |
+          npx cap sync android
+
       - name: Build APK
         script: |
           cd android
