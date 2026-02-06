@@ -7,7 +7,6 @@ triggering:
 workflows:
   android-build:
     name: Build StudentFlow APK
-    # PAS de instance_type = automatique gratuit
     
     scripts:
       - name: Install Bubblewrap
@@ -16,7 +15,7 @@ workflows:
           
       - name: Build APK
         script: |
-          bubblewrap init --manifest https://ton-url.netlify.app/manifest.json
+          echo "Y" | bubblewrap init --manifest https://ton-url.netlify.app/manifest.json
           bubblewrap build
           
     artifacts:
