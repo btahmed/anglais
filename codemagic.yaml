@@ -1,0 +1,27 @@
+name: StudentFlow PWA Build
+triggering:
+  push:
+    branches:
+      - main
+
+workflows:
+  android-build:
+    name: Build StudentFlow APK
+    instance_type: linux_x2
+    
+    environment:
+      groups:
+        - keystore_credentials
+        
+    scripts:
+      - name: Install Bubblewrap
+        script: |
+          npm install -g @bubblewrap/cli
+          
+      - name: Build APK
+        script: |
+          bubblewrap init --manifest https://ton-url.netlify.app/manifest.json
+          bubblewrap build
+          
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
