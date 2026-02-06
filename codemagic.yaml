@@ -3,19 +3,25 @@ workflows:
     name: Build StudentFlow Android (Capacitor)
 
     environment:
-      node: latest
+      node: 20
 
     scripts:
       - name: Install Node deps
         script: |
-          npm ci
+          set -e
+          node -v
+          npm -v
+          npm install --no-audit --no-fund
 
       - name: Sync Capacitor Android
         script: |
+          set -e
+          npx cap --version
           npx cap sync android
 
       - name: Build APK
         script: |
+          set -e
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
