@@ -9,13 +9,23 @@ workflows:
     name: Build StudentFlow APK
     
     scripts:
+      - name: Install JDK 17
+        script: |
+          sudo apt update
+          sudo apt install -y openjdk-17-jdk
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          
       - name: Install Bubblewrap
         script: |
           npm install -g @bubblewrap/cli
           
-      - name: Build APK
+      - name: Build APK (non-interactive)
         script: |
-          echo "Y" | bubblewrap init --manifest https://ton-url.netlify.app/manifest.json
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          bubblewrap init \
+            --manifest https://ton-url.netlify.app/manifest.json \
+            --jdkPath /usr/lib/jvm/java-17-openjdk-amd64 \
+            --nointeractive
           bubblewrap build
           
     artifacts:
